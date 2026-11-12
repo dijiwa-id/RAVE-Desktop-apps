@@ -20,6 +20,8 @@ import Playlist from '@/views/Playlist';
 import Show from '@/views/Show';
 import Settings from '@/views/Settings';
 import Login from '@/views/Login';
+import { useUi } from '@/stores/ui';
+import { Splash } from '@/components/Splash';
 
 /** Lebar jendela → tata letak: sidebar ciut < 1100 px, panel kanan menimpa konten < 1280 px. */
 function useWidth() {
@@ -32,16 +34,16 @@ function useWidth() {
   return w;
 }
 
+/** Langsung masuk ke pemutar sebagai tamu (pratinjau 30 dtk); Masuk/Daftar dibuka sebagai modal. */
 export default function App() {
-  const authed = !!useAuth((s) => s.accessToken);
-  if (!authed)
-    return (
-      <>
-        <Login />
-        <Toasts />
-      </>
-    );
-  return <Shell />;
+  const auth = useUi((s) => s.auth);
+  return (
+    <>
+      <Shell />
+      {auth && <Login key={auth} mode={auth} />}
+      <Splash />
+    </>
+  );
 }
 
 function Shell() {
@@ -54,12 +56,14 @@ function Shell() {
   const collapsed = userCollapsed ?? width < 1100;
   const overlayPanel = width < 1280;
 
-  // Profil terbaru (status Premium dsb.) saat aplikasi dibuka.
+  // Profil terbaru (status Premium dsb.) saat aplikasi dibuka / setelah masuk.
+  const authed = !!useAuth((s) => s.accessToken);
   useEffect(() => {
+    if (!authed) return;
     api<Me>('/v1/me')
       .then((u) => useAuth.getState().setUser(u))
       .catch(() => {});
-  }, []);
+  }, [authed]);
 
   // Gulir ke atas saat pindah halaman.
   useEffect(() => {

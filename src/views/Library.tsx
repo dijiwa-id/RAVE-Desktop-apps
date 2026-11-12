@@ -4,12 +4,17 @@ import { useT } from '@/lib/i18n';
 import { useApi } from '@/lib/query';
 import type { ArtistSummary, LibrarySummary, ReleaseSummary } from '@/lib/types';
 import { useNav } from '@/stores/nav';
-import { cx, Empty, Loadable, SkeletonCards } from '@/components/ui';
+import { cx, Empty, GuestPrompt, Loadable, SkeletonCards } from '@/components/ui';
+import { useAuth } from '@/stores/auth';
 import { MediaCard } from '@/components/media';
 
 type Tab = 'playlists' | 'artists' | 'albums';
 
 export default function Library() {
+  return useAuth((s) => s.accessToken) ? <LibraryInner /> : <GuestPrompt />;
+}
+
+function LibraryInner() {
   const t = useT();
   const [tab, setTab] = useState<Tab>('playlists');
   const q = useApi<LibrarySummary>('/v1/library/summary');

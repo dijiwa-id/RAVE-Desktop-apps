@@ -6,6 +6,7 @@ import { useAuth } from '@/stores/auth';
 import { normalizeServer, useSettings, type Quality } from '@/stores/settings';
 import { toast } from '@/stores/toast';
 import { cx } from '@/components/ui';
+import { useUi } from '@/stores/ui';
 
 const APP_VERSION = '0.1.0';
 
@@ -56,7 +57,17 @@ export default function Settings() {
               {t.settings.logout}
             </button>
           </div>
-        ) : null}
+        ) : (
+          <div className="flex flex-wrap items-center gap-4">
+            <p className="max-w-md text-sm text-muted">{t.guest.body}</p>
+            <button type="button" className="btn-primary" onClick={() => useUi.getState().openAuth('signup')}>
+              {t.guest.signup}
+            </button>
+            <button type="button" className="btn-ghost" onClick={() => useUi.getState().openAuth('login')}>
+              {t.guest.login}
+            </button>
+          </div>
+        )}
       </Section>
 
       <Section title={t.settings.server} hint={t.settings.serverHint}>

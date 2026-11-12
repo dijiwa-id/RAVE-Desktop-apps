@@ -8,6 +8,7 @@ import { useAuth } from '@/stores/auth';
 import { useNav, type Route } from '@/stores/nav';
 import { usePlayer } from '@/stores/player';
 import { Cover, cx } from '@/components/ui';
+import { useUi } from '@/stores/ui';
 
 /** Navigasi kiri: menu utama + pustaka (Disukai & playlist). Ciut ke ikon di jendela sempit. */
 export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
@@ -55,6 +56,18 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
       <div className="mx-4 my-3 border-t border-dashed border-line" />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
+        {!collapsed && !authed && (
+          <div className="mx-1 border border-line bg-raised p-4">
+            <p className="font-bold">{t.guest.libraryHint}</p>
+            <p className="mt-1 text-[13px] text-muted">{t.guest.body}</p>
+            <button type="button" onClick={() => useUi.getState().openAuth('signup')} className="btn-primary mt-4 w-full !py-2.5">
+              {t.guest.signup}
+            </button>
+            <button type="button" onClick={() => useUi.getState().openAuth('login')} className="label mt-3 w-full text-center text-muted hover:text-paper">
+              {t.guest.login}
+            </button>
+          </div>
+        )}
         {!collapsed && authed && <p className="label px-3 pb-2 text-subtle">{t.nav.yourPlaylists}</p>}
         {authed && (
           <LibRow

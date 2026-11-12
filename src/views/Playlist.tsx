@@ -5,7 +5,7 @@ import { useApi } from '@/lib/query';
 import type { Playlist as PlaylistData, Track } from '@/lib/types';
 import { useAuth } from '@/stores/auth';
 import { trackToPlayable, usePlayer } from '@/stores/player';
-import { Empty, IconButton, Loadable, PlayButton } from '@/components/ui';
+import { Empty, GuestPrompt, IconButton, Loadable, PlayButton } from '@/components/ui';
 import { Dot, Hero } from '@/components/Hero';
 import { TrackList } from '@/components/media';
 
@@ -13,8 +13,9 @@ import { TrackList } from '@/components/media';
 export default function Playlist({ id }: { id: string | 'liked' }) {
   const t = useT();
   const liked = id === 'liked';
+  const authed = !!useAuth((s) => s.accessToken);
   const pl = useApi<PlaylistData>(liked ? null : `/v1/library/playlists/${id}`);
-  const lk = useApi<{ data: Track[] }>(liked ? '/v1/library/likes' : null);
+  const lk = useApi<{ data: Track[] }>(liked && authed ? '/v1/library/likes' : null);
   const user = useAuth((s) => s.user);
   const q = liked ? lk : pl;
   const tracks: Track[] = liked ? (lk.data?.data ?? []) : (pl.data?.items.map((x) => x.track) ?? []);
@@ -22,6 +23,7 @@ export default function Playlist({ id }: { id: string | 'liked' }) {
   const inThis = !!current && tracks.some((x) => x.id === current.id);
   const title = liked ? t.nav.liked : (pl.data?.title ?? '');
 
+  if (liked && !authed) return <GuestPrompt />;
   return (
     <Loadable loading={q.loading} error={q.error} onRetry={q.reload}>
       {(liked || pl.data) && (

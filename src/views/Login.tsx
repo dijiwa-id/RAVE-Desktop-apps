@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Server } from 'lucide-react';
+import { ArrowLeft, Server, X } from 'lucide-react';
 import logo from '@/assets/rave-logo.webp';
 import { api, errorText } from '@/lib/api';
 import { useT } from '@/lib/i18n';
@@ -8,10 +8,22 @@ import { useAuth } from '@/stores/auth';
 import { normalizeServer, useSettings } from '@/stores/settings';
 import { clearCache } from '@/lib/query';
 import { cx } from '@/components/ui';
+import { useUi } from '@/stores/ui';
+import { useEffect } from 'react';
 
-/** Masuk dengan OTP email (IAM RAVE hanya OTP — tanpa kata sandi). */
-export default function Login() {
+/**
+ * Modal Masuk/Daftar dengan OTP email (IAM RAVE hanya OTP — akun baru dibuat otomatis saat kode diverifikasi).
+ * Aplikasi tetap dapat dipakai sebagai tamu; modal ini dibuka dari tombol Masuk/Daftar.
+ */
+export default function Login({ mode }: { mode: 'login' | 'signup' }) {
   const t = useT();
+  const { openAuth, closeAuth } = useUi();
+  const signup = mode === 'signup';
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => e.key === 'Escape' && closeAuth();
+    window.addEventListener('keydown', on);
+    return () => window.removeEventListener('keydown', on);
+  }, [closeAuth]);
   const { server, setServer, locale, setLocale } = useSettings();
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
@@ -45,6 +57,7 @@ export default function Login() {
       clearCache();
       useAuth.getState().setSession(r);
       if (r.user.locale) setLocale(r.user.locale);
+      closeAuth();
     } catch (x) {
       setErr(errorText(x, t.common.offline));
     } finally {
@@ -53,22 +66,27 @@ export default function Login() {
   }
 
   return (
-    <div className="grain grid h-full grid-cols-1 bg-canvas lg:grid-cols-[1.1fr_1fr]">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={signup ? t.login.signupTitle : t.login.title} onClick={closeAuth}>
+    <div onClick={(e) => e.stopPropagation()} className="rise grain relative grid max-h-full w-full max-w-[980px] grid-cols-1 overflow-y-auto border-2 border-ink bg-canvas shadow-[8px_8px_0_var(--color-mustard)] lg:grid-cols-[1.1fr_1fr]">
+      <button type="button" aria-label={t.login.close} title={t.login.close} onClick={closeAuth} className="absolute top-3 right-3 z-10 grid size-9 place-items-center text-muted hover:text-paper">
+        <X className="size-5" />
+      </button>
       {/* Poster merek */}
-      <div className="relative hidden overflow-hidden bg-purple p-12 lg:flex lg:flex-col lg:justify-between">
+      <div className="relative hidden min-h-[560px] overflow-hidden bg-purple p-10 lg:flex lg:flex-col lg:justify-between">
         <img src={logo} alt="RAVE" className="h-10 w-auto self-start" />
         <div className="groove absolute -right-40 -bottom-40 size-[520px] opacity-90" aria-hidden />
         <div className="relative">
           <p className="label sticker mb-6 bg-mustard px-2 py-1 text-ink [--r:-4deg]">DIY · Indie · Live</p>
-          <h1 className="display max-w-xl text-[92px]">{t.login.tagline}</h1>
+          <h1 className="display max-w-xl text-[64px]">{t.login.tagline}</h1>
         </div>
         <p className="label relative text-paper/60">RV-DESKTOP · © 2026 RAVE · dijiwa.id</p>
       </div>
 
       {/* Formulir */}
-      <div className="flex flex-col justify-center px-8 py-10 sm:px-16">
+      <div className="flex flex-col justify-center px-8 py-10 sm:px-12">
         <img src={logo} alt="RAVE" className="mb-10 h-9 w-auto self-start lg:hidden" />
-        <h2 className="display text-[56px]">{t.login.title}</h2>
+        <h2 className="display text-[52px]">{signup ? t.login.signupTitle : t.login.title}</h2>
+        {signup && <p className="mt-2 max-w-sm text-sm text-muted">{t.login.signupBody}</p>}
 
         {step === 'email' ? (
           <form onSubmit={sendCode} className="mt-8 max-w-sm space-y-4">
@@ -98,7 +116,7 @@ export default function Login() {
               />
             </label>
             <button type="submit" className="btn-primary w-full" disabled={busy || code.length !== 6}>
-              {busy ? '…' : t.login.verify}
+              {busy ? '…' : signup ? t.login.signupCta : t.login.verify}
             </button>
             <div className="flex justify-between text-sm">
               <button type="button" className="inline-flex items-center gap-1 text-muted hover:text-paper" onClick={() => (setStep('email'), setCode(''), setErr(null))}>
@@ -116,7 +134,10 @@ export default function Login() {
           </p>
         )}
 
-        <div className="mt-12 max-w-sm border-t border-dashed border-line pt-4 text-sm">
+        <button type="button" onClick={() => openAuth(signup ? 'login' : 'signup')} className="mt-6 self-start text-sm font-bold text-mustard hover:underline">
+          {signup ? t.login.haveAccount : t.login.noAccount}
+        </button>
+        <div className="mt-8 max-w-sm border-t border-dashed border-line pt-4 text-sm">
           {editServer ? (
             <div className="flex gap-2">
               <input className="field font-mono text-xs" value={srv} onChange={(e) => setSrv(e.target.value)} aria-label={t.login.server} spellCheck={false} />
@@ -149,6 +170,7 @@ export default function Login() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

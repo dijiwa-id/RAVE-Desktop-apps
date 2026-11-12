@@ -3,6 +3,7 @@ import { CircleAlert, Loader2, Pause, Play, X } from 'lucide-react';
 import { errorText, media } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import { useToast } from '@/stores/toast';
+import { useUi } from '@/stores/ui';
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
 
@@ -122,6 +123,26 @@ export function Toasts() {
           </button>
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Ajakan masuk/daftar untuk tamu pada fitur pribadi (Pustaka, Disukai). */
+export function GuestPrompt() {
+  const t = useT();
+  return (
+    <div className="grid place-items-center px-6 py-24 text-center">
+      <div className="groove size-24" aria-hidden />
+      <h2 className="display mt-6 text-[48px]">{t.guest.title}</h2>
+      <p className="mt-2 max-w-md text-muted">{t.guest.body}</p>
+      <div className="mt-6 flex items-center gap-4">
+        <button type="button" className="btn-primary" onClick={() => useUi.getState().openAuth('signup')}>
+          {t.guest.signup}
+        </button>
+        <button type="button" className="btn-ghost" onClick={() => useUi.getState().openAuth('login')}>
+          {t.guest.login}
+        </button>
+      </div>
     </div>
   );
 }

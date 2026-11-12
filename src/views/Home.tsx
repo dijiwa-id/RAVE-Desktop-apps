@@ -25,6 +25,7 @@ export default function Home() {
           {greeting(t)}
           {user ? `, ${user.display_name.split(' ')[0]}` : ''}
         </h1>
+        {!user && <p className="mt-3 max-w-2xl text-sm text-paper/85">{t.guest.banner}</p>}
         <Loadable loading={q.loading} error={q.error} onRetry={q.reload} skeleton={<div className="mt-6 h-40 animate-pulse bg-raised/40" />}>
           <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3">
             {q.data?.quick_picks.map((it) => <QuickPick key={it.kind + it.id} item={it} />)}

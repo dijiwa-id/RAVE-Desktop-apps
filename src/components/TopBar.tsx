@@ -5,6 +5,7 @@ import { useAuth } from '@/stores/auth';
 import { useNav } from '@/stores/nav';
 import { Cover, cx } from '@/components/ui';
 import { logout } from '@/lib/session';
+import { useUi } from '@/stores/ui';
 
 /** Bilah atas tiap tampilan: maju/mundur riwayat, kolom cari (di tampilan Cari), menu akun. */
 export function TopBar({ solid }: { solid: boolean }) {
@@ -59,6 +60,17 @@ export function TopBar({ solid }: { solid: boolean }) {
       )}
 
       <div className="flex-1" />
+
+      {!user && (
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={() => useUi.getState().openAuth('login')} className="label px-2 py-2 text-paper hover:text-mustard">
+            {t.guest.login}
+          </button>
+          <button type="button" onClick={() => useUi.getState().openAuth('signup')} className="btn-primary !px-4 !py-2.5">
+            {t.guest.signup}
+          </button>
+        </div>
+      )}
 
       {user && (
         <div className="relative">

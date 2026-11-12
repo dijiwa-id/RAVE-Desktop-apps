@@ -10,6 +10,7 @@ import { useAuth } from '@/stores/auth';
 import { trackToPlayable, usePlayer } from '@/stores/player';
 import { toast } from '@/stores/toast';
 import { Loadable, PlayButton } from '@/components/ui';
+import { useUi } from '@/stores/ui';
 import { MediaCard, Shelf, TrackList } from '@/components/media';
 
 export default function Artist({ id }: { id: string }) {
@@ -79,6 +80,11 @@ export default function Artist({ id }: { id: string }) {
 
           <div className="flex items-center gap-5 px-6 py-5">
             <PlayButton size="lg" label={t.common.play} playing={inThis && playing} onClick={() => (inThis ? toggle() : void playQueue(a.top_tracks.map(trackToPlayable)))} />
+            {!authed && (
+              <button type="button" onClick={() => useUi.getState().openAuth('signup')} className="btn-ghost">
+                {t.common.follow}
+              </button>
+            )}
             {authed && following != null && (
               <button type="button" onClick={() => void follow()} aria-pressed={following} className="btn-ghost">
                 {following ? t.common.following : t.common.follow}
