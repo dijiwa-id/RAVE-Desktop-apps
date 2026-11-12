@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+import { openExternal } from '@/lib/native';
+import { APP_VERSION } from '@/lib/version';
 import { useT } from '@/lib/i18n';
 import { logout } from '@/lib/session';
 import { clearCache } from '@/lib/query';
@@ -8,7 +11,6 @@ import { toast } from '@/stores/toast';
 import { cx } from '@/components/ui';
 import { useUi } from '@/stores/ui';
 
-const APP_VERSION = '0.1.0';
 
 export default function Settings() {
   const t = useT();
@@ -93,6 +95,8 @@ export default function Settings() {
         </div>
       </Section>
 
+      {user && <Privacy />}
+
       <Section title={t.settings.quality} hint={t.settings.qualityHint}>
         <select className="field max-w-xs" value={s.quality} onChange={(e) => s.setQuality(e.target.value as Quality)} aria-label={t.settings.quality}>
           {(['auto', 'low', 'normal', 'high', 'lossless'] as const).map((q) => (
@@ -102,6 +106,11 @@ export default function Settings() {
             </option>
           ))}
         </select>
+        {!user?.premium && (
+          <button type="button" className="label mt-3 text-mustard hover:underline" onClick={() => void openExternal(`${s.server}/premium`)}>
+            {t.settings.goPremium} ↗
+          </button>
+        )}
       </Section>
 
       <Section title={t.settings.mediaKeys} hint={t.settings.mediaKeysHint}>
@@ -125,7 +134,15 @@ export default function Settings() {
       </Section>
 
       <Section title={t.settings.about}>
-        <p className="text-sm text-muted">
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className="btn-ghost" onClick={() => void openExternal(`${s.server}/privasi`)}>
+            {t.settings.privacyPolicy}
+          </button>
+          <button type="button" className="btn-ghost" onClick={() => void openExternal(`${s.server}/ketentuan`)}>
+            {t.settings.terms}
+          </button>
+        </div>
+        <p className="mt-3 text-sm text-muted">
           {t.settings.version(APP_VERSION)} · © 2026 RAVE · dijiwa.id
         </p>
       </Section>
@@ -140,5 +157,52 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
       {hint && <p className="mt-1 mb-3 text-sm text-muted">{hint}</p>}
       <div className={hint ? '' : 'mt-3'}>{children}</div>
     </section>
+  );
+}
+
+const PURPOSES = ['personalization', 'ads', 'marketing', 'aggregate_sharing'] as const;
+
+/** Privasi & data (UU PDP, BRD §8.2 / IAM-07): persetujuan per tujuan & hapus akun. */
+function Privacy() {
+  const t = useT();
+  const [granted, setGranted] = useState<Record<string, boolean> | null>(null);
+  useEffect(() => {
+    api<{ data: { purpose: string; granted: boolean }[] }>('/v1/me/consents')
+      .then((r) => setGranted(Object.fromEntries(PURPOSES.map((p) => [p, !!r.data.find((c) => c.purpose === p)?.granted]))))
+      .catch(() => setGranted(Object.fromEntries(PURPOSES.map((p) => [p, false]))));
+  }, []);
+  async function set(p: string, v: boolean) {
+    setGranted((g) => ({ ...g!, [p]: v }));
+    try {
+      await api('/v1/me/consents', { method: 'PUT', body: { purpose: p, granted: v } });
+    } catch (e) {
+      setGranted((g) => ({ ...g!, [p]: !v }));
+      toast.error((e as Error).message);
+    }
+  }
+  async function del() {
+    if (!confirm(t.settings.deleteConfirm)) return;
+    try {
+      await api('/v1/me', { method: 'DELETE' });
+      await logout();
+      toast.success(t.settings.deleted);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+  return (
+    <Section title={t.settings.privacy} hint={t.settings.privacyHint}>
+      <div className="space-y-2">
+        {PURPOSES.map((p) => (
+          <label key={p} className="flex items-center gap-3 text-sm font-semibold">
+            <input type="checkbox" className="size-4 accent-[var(--color-mustard)]" disabled={!granted} checked={!!granted?.[p]} onChange={(e) => void set(p, e.target.checked)} />
+            {t.settings.consent[p]}
+          </label>
+        ))}
+      </div>
+      <button type="button" onClick={() => void del()} className="label mt-5 text-[#e0566e] hover:underline">
+        {t.settings.deleteAccount}
+      </button>
+    </Section>
   );
 }

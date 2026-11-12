@@ -22,7 +22,8 @@ export const useSettings = create<SettingsState>()(
   persist(
     (set) => ({
       server: DEFAULT_SERVER,
-      locale: navigator.language?.toLowerCase().startsWith('id') ? 'id' : 'en',
+      // BRD (NFR lokalisasi): Bahasa Indonesia default; Inggris bila perangkat berbahasa Inggris.
+      locale: navigator.language?.toLowerCase().startsWith('en') ? 'en' : 'id',
       quality: 'auto',
       mediaKeys: true,
       setServer: (server) => set({ server: server.trim().replace(/\/+$/, '') }),

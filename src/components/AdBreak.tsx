@@ -22,7 +22,7 @@ export function AdBar() {
       <Cover src={ad.image_url} className="size-14" />
       <div className="min-w-0 flex-1">
         <p className="label text-mustard">
-          {t.ads.label} · {ad.advertiser} · {left}s
+          {ad.is_house || ad.label === 'Dari RAVE' ? 'Dari RAVE' : t.ads.label} · {ad.advertiser} · {left}s
         </p>
         <p className="truncate font-bold">{ad.title}</p>
         {ad.body && <p className="truncate text-[13px] text-muted">{ad.body}</p>}

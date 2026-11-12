@@ -69,7 +69,21 @@ const audio = new Audio();
 audio.preload = 'auto';
 
 // ---- Event putar untuk royalti & statistik (TDD §11.3): start, progress tiap 15 dtk, complete, skip ----
-let pending: Record<string, unknown>[] = [];
+const PENDING_KEY = 'rave-desktop-pending-events';
+let pending: Record<string, unknown>[] = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(PENDING_KEY) ?? '[]') as Record<string, unknown>[];
+  } catch {
+    return [];
+  }
+})();
+const persist = () => {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(pending.slice(-200)));
+  } catch {
+    /* penyimpanan penuh/terkunci */
+  }
+};
 let lastProgressAt = 0;
 let playedMs = 0;
 let lastTick = 0;
@@ -86,6 +100,7 @@ function queueEvent(type: 'start' | 'progress' | 'complete' | 'skip') {
     played_ms: Math.round(playedMs),
     at: new Date().toISOString(),
   });
+  persist();
   if (type !== 'progress' || pending.length >= 4) void flush();
   else if (!flushTimer) flushTimer = setInterval(() => void flush(), 30_000);
 }
@@ -104,8 +119,11 @@ async function flush(keepalive = false) {
       clearInterval(flushTimer);
       flushTimer = null;
     }
+    persist();
   }
 }
+// Kirim event yang tersisa dari sesi sebelumnya (aplikasi ditutup/offline).
+if (pending.length) setTimeout(() => void flush(), 3000);
 window.addEventListener('beforeunload', () => void flush(true));
 
 let recoveries = 0;
@@ -137,9 +155,10 @@ export const usePlayer = create<PlayerState>((set, get) => {
       });
       if (get().current?.id !== item.id) return;
       set({ session, durationMs: session.duration_ms || item.duration_ms });
-      if (session.quality_capped === 'premium' && !premiumNotified) {
+      const cap = session.quality_capped;
+      if (cap && cap !== 'preview' && !premiumNotified) {
         premiumNotified = true;
-        toast.info(t().player.premiumQuality);
+        toast.info(cap === 'premium' ? t().player.premiumQuality : cap === 'disabled' ? t().player.qualityDisabled : t().player.qualityUnavailable);
       }
       audio.src = media(session.stream_url)!;
       if (resumeMs) audio.addEventListener('loadedmetadata', () => (audio.currentTime = resumeMs / 1000), { once: true });
@@ -324,6 +343,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
 /** Logout: hentikan pemutaran & buang event milik akun sebelumnya (tidak boleh terkirim dengan token akun lain). */
 export function resetPlayer() {
   pending = [];
+  persist();
   if (flushTimer) clearInterval(flushTimer);
   flushTimer = null;
   abortAdBreak();

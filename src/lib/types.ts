@@ -9,6 +9,8 @@ export interface Me {
   locale?: 'id' | 'en' | null;
   roles: string[];
   premium: boolean;
+  onboarded?: boolean;
+  genres?: string[];
 }
 export interface TokenResponse {
   access_token: string;
@@ -161,6 +163,9 @@ export interface AdCreative {
   theme_color: string | null;
   duration_s: number;
   skippable_after_s: number | null;
+  /** Promosi internal RAVE → label "Dari RAVE" (BRD §7.9 / ADS-04). */
+  is_house?: boolean;
+  label?: 'Iklan' | 'Dari RAVE';
 }
 export interface AdBreakResponse {
   break_id: string | null;

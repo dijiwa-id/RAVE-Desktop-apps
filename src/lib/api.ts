@@ -1,5 +1,6 @@
 import { useAuth } from '@/stores/auth';
 import { useSettings } from '@/stores/settings';
+import { APP_VERSION } from '@/lib/version';
 
 /** Galat RFC 9457 dari gateway RAVE. */
 export class ApiError extends Error {
@@ -64,7 +65,7 @@ export async function api<T = unknown>(path: string, opts: Opts = {}): Promise<T
   for (const [k, v] of Object.entries(opts.query ?? {})) if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v));
   const go = () => {
     const token = useAuth.getState().accessToken;
-    const headers: Record<string, string> = { 'accept-language': useSettings.getState().locale };
+    const headers: Record<string, string> = { 'accept-language': useSettings.getState().locale, 'x-app-version': `desktop/${APP_VERSION}` };
     if (opts.body !== undefined) headers['content-type'] = 'application/json';
     if (token && opts.auth !== false) headers.authorization = `Bearer ${token}`;
     return fetch(url, {

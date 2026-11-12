@@ -22,6 +22,7 @@ import Settings from '@/views/Settings';
 import Login from '@/views/Login';
 import { useUi } from '@/stores/ui';
 import { Splash } from '@/components/Splash';
+import { Onboarding } from '@/components/Onboarding';
 
 /** Lebar jendela → tata letak: sidebar ciut < 1100 px, panel kanan menimpa konten < 1280 px. */
 function useWidth() {
@@ -37,10 +38,13 @@ function useWidth() {
 /** Langsung masuk ke pemutar sebagai tamu (pratinjau 30 dtk); Masuk/Daftar dibuka sebagai modal. */
 export default function App() {
   const auth = useUi((s) => s.auth);
+  const needsOnboarding = useAuth((s) => !!s.accessToken && s.user?.onboarded === false);
+  const [skipOnboarding, setSkipOnboarding] = useState(false);
   return (
     <>
       <Shell />
       {auth && <Login key={auth} mode={auth} />}
+      {needsOnboarding && !skipOnboarding && !auth && <Onboarding onClose={() => setSkipOnboarding(true)} />}
       <Splash />
     </>
   );
@@ -73,6 +77,7 @@ function Shell() {
 
   useShortcuts();
   useMediaIntegration();
+  useLocaleSync();
 
   const view = (() => {
     switch (route.name) {
@@ -122,6 +127,20 @@ function Shell() {
 }
 
 /** Pintasan keyboard (tidak aktif saat mengetik di kolom isian). */
+/** Bahasa yang dipilih disimpan ke akun (PATCH /v1/me, BRD IAM-08). */
+function useLocaleSync() {
+  const locale = useSettings((s) => s.locale);
+  const authed = !!useAuth((s) => s.accessToken);
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    if (authed) void api('/v1/me', { method: 'PATCH', body: { locale } }).catch(() => {});
+  }, [locale]); // eslint-disable-line react-hooks/exhaustive-deps
+}
+
 function useShortcuts() {
   useEffect(() => {
     const on = (e: KeyboardEvent) => {

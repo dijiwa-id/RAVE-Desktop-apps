@@ -1,6 +1,6 @@
 [package]
 name = "rave-desktop"
-version = "0.1.0"
+version = "0.2.0"
 description = "RAVE Desktop — aplikasi dengar RAVE"
 authors = ["dijiwa.id"]
 edition = "2021"
