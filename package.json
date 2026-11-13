@@ -1,7 +1,7 @@
 {
   "name": "rave-desktop",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.2",
   "type": "module",
   "description": "RAVE Desktop — aplikasi dengar RAVE untuk Windows & macOS (Tauri v2)",
   "scripts": {
@@ -22,6 +22,7 @@
     "@tauri-apps/plugin-global-shortcut": "^2.4.1",
     "@tauri-apps/plugin-opener": "^2.7.3",
     "@tauri-apps/plugin-window-state": "^2.5.0",
+    "hls.js": "^1.7.3",
     "lucide-react": "^1.52.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

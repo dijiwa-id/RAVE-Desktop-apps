@@ -73,3 +73,17 @@ export function clearCache() {
   cache.clear();
   subs.forEach((s) => s.forEach((f) => f()));
 }
+
+/**
+ * Muat ulang `key` tiap `ms` selama jendela terlihat (pengganti refetchInterval react-query).
+ * Dipakai untuk data yang berubah sendiri (status live, penonton).
+ */
+export function usePolling(key: string | null, ms: number) {
+  useEffect(() => {
+    if (!key) return;
+    const t = setInterval(() => {
+      if (!document.hidden) load(key, true).catch(() => {});
+    }, ms);
+    return () => clearInterval(t);
+  }, [key, ms]);
+}

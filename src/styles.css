@@ -170,9 +170,15 @@ img {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     padding: 0.45rem 0.8rem;
+    transition: border-color 0.12s, background 0.12s;
   }
   .btn-ghost:hover {
     border-color: var(--color-paper);
+    background: rgb(237 237 237 / 0.06);
+  }
+  .btn-ghost:disabled {
+    opacity: 0.5;
+    pointer-events: none;
   }
   .field {
     width: 100%;

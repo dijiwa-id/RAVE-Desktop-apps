@@ -81,7 +81,7 @@ export default function Artist({ id }: { id: string }) {
           <div className="flex items-center gap-5 px-6 py-5">
             <PlayButton size="lg" label={t.common.play} playing={inThis && playing} onClick={() => (inThis ? toggle() : void playQueue(a.top_tracks.map(trackToPlayable)))} />
             {!authed && (
-              <button type="button" onClick={() => useUi.getState().openAuth('signup')} className="btn-ghost">
+              <button type="button" onClick={() => useUi.getState().openAuth()} className="btn-ghost">
                 {t.common.follow}
               </button>
             )}

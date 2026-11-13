@@ -171,3 +171,58 @@ export interface AdBreakResponse {
   break_id: string | null;
   ads: AdCreative[];
 }
+
+/** Tile kategori Jelajahi (`GET /v1/catalog/browse`) — `href` memakai rute web (`/app/genre/:id`, `/app/events`, …). */
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+  image_url: string | null;
+  href: string;
+}
+export interface BrowseCategory {
+  category: Category;
+  artists: ArtistSummary[];
+  releases: ReleaseSummary[];
+  tracks: Track[];
+}
+
+// ---- Live (docs/API.md §10) ----
+export type LiveStatus = 'SCHEDULED' | 'LIVE' | 'INTERRUPTED' | 'ENDED';
+export interface LiveStream {
+  id: string;
+  title: string;
+  description: string | null;
+  status: LiveStatus;
+  access: 'PUBLIC' | 'TICKET' | string;
+  event: { id: string; slug: string; title: string; city: string; starts_at: string } | null;
+  artist: { id: string; name: string; slug: string; image_url: string | null } | null;
+  org: { id: string; name: string };
+  cover_url: string | null;
+  scheduled_at: string | null;
+  started_at: string | null;
+  ended_at: string | null;
+  ended_reason: string | null;
+  viewers: number;
+  peak_viewers: number;
+  chat_enabled: boolean;
+}
+export type LiveStreamDetail = LiveStream & { can_watch: boolean; access_reason: null | 'login_required' | 'ticket_required' | 'not_live' };
+export interface LivePlayback {
+  hls_url: string;
+  expires_at: string;
+}
+export interface LiveChatMessage {
+  id: number;
+  user_id: string;
+  display_name: string;
+  body: string;
+  created_at: string;
+  mine: boolean;
+}
+export interface LiveChatPage {
+  data: LiveChatMessage[];
+  last_id: number | null;
+  chat_enabled: boolean;
+  slowmode_s: number;
+}

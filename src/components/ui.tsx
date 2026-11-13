@@ -135,13 +135,10 @@ export function GuestPrompt() {
       <div className="groove size-24" aria-hidden />
       <h2 className="display mt-6 text-[48px]">{t.guest.title}</h2>
       <p className="mt-2 max-w-md text-muted">{t.guest.body}</p>
-      <div className="mt-6 flex items-center gap-4">
-        <button type="button" className="btn-primary" onClick={() => useUi.getState().openAuth('signup')}>
-          {t.guest.signup}
-        </button>
-        <button type="button" className="btn-ghost" onClick={() => useUi.getState().openAuth('login')}>
-          {t.guest.login}
-        </button>
+      <div className="mt-6">
+            <button type="button" className="btn-primary" onClick={() => useUi.getState().openAuth()}>
+              {t.guest.cta}
+            </button>
       </div>
     </div>
   );

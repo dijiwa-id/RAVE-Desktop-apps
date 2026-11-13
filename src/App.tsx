@@ -8,6 +8,7 @@ import { usePlayer } from '@/stores/player';
 import { useSettings } from '@/stores/settings';
 import { Sidebar } from '@/components/Sidebar';
 import { TopBar } from '@/components/TopBar';
+import { ConnectionBanner } from '@/components/ConnectionBanner';
 import { PlayerBar, type PanelTab } from '@/components/PlayerBar';
 import { RightPanel } from '@/components/RightPanel';
 import { Toasts } from '@/components/ui';
@@ -18,6 +19,10 @@ import Album from '@/views/Album';
 import Artist from '@/views/Artist';
 import Playlist from '@/views/Playlist';
 import Show from '@/views/Show';
+import Genre from '@/views/Genre';
+import Podcasts from '@/views/Podcasts';
+import Live from '@/views/Live';
+import LiveWatch from '@/views/LiveWatch';
 import Settings from '@/views/Settings';
 import Login from '@/views/Login';
 import { useUi } from '@/stores/ui';
@@ -43,7 +48,7 @@ export default function App() {
   return (
     <>
       <Shell />
-      {auth && <Login key={auth} mode={auth} />}
+      {auth && <Login />}
       {needsOnboarding && !skipOnboarding && !auth && <Onboarding onClose={() => setSkipOnboarding(true)} />}
       <Splash />
     </>
@@ -97,6 +102,14 @@ function Shell() {
         return <Playlist key={route.id} id={route.id} />;
       case 'show':
         return <Show key={route.id} id={route.id} />;
+      case 'genre':
+        return <Genre key={route.id} id={route.id} />;
+      case 'podcasts':
+        return <Podcasts key={route.kind} kind={route.kind} />;
+      case 'live':
+        return <Live />;
+      case 'live-watch':
+        return <LiveWatch key={route.id} id={route.id} />;
       case 'settings':
         return <Settings />;
     }
@@ -104,6 +117,7 @@ function Shell() {
 
   return (
     <div className="flex h-full flex-col gap-2 bg-canvas p-2">
+      <ConnectionBanner />
       <div className="relative flex min-h-0 flex-1 gap-2">
         <Sidebar collapsed={collapsed} onToggle={() => setUserCollapsed(!collapsed)} />
         <main className="panel relative flex min-w-0 flex-1 flex-col overflow-hidden">

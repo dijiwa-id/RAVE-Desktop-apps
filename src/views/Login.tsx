@@ -15,10 +15,9 @@ import { useEffect } from 'react';
  * Modal Masuk/Daftar dengan OTP email (IAM RAVE hanya OTP — akun baru dibuat otomatis saat kode diverifikasi).
  * Aplikasi tetap dapat dipakai sebagai tamu; modal ini dibuka dari tombol Masuk/Daftar.
  */
-export default function Login({ mode }: { mode: 'login' | 'signup' }) {
+export default function Login() {
   const t = useT();
-  const { openAuth, closeAuth } = useUi();
-  const signup = mode === 'signup';
+  const closeAuth = useUi((s) => s.closeAuth);
   useEffect(() => {
     const on = (e: KeyboardEvent) => e.key === 'Escape' && closeAuth();
     window.addEventListener('keydown', on);
@@ -66,7 +65,7 @@ export default function Login({ mode }: { mode: 'login' | 'signup' }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={signup ? t.login.signupTitle : t.login.title} onClick={closeAuth}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={t.login.title} onClick={closeAuth}>
     <div onClick={(e) => e.stopPropagation()} className="rise grain relative grid max-h-full w-full max-w-[980px] grid-cols-1 overflow-y-auto border-2 border-ink bg-canvas shadow-[8px_8px_0_var(--color-mustard)] lg:grid-cols-[1.1fr_1fr]">
       <button type="button" aria-label={t.login.close} title={t.login.close} onClick={closeAuth} className="absolute top-3 right-3 z-10 grid size-9 place-items-center text-muted hover:text-paper">
         <X className="size-5" />
@@ -85,8 +84,8 @@ export default function Login({ mode }: { mode: 'login' | 'signup' }) {
       {/* Formulir */}
       <div className="flex flex-col justify-center px-8 py-10 sm:px-12">
         <img src={logo} alt="RAVE" className="mb-10 h-9 w-auto self-start lg:hidden" />
-        <h2 className="display text-[52px]">{signup ? t.login.signupTitle : t.login.title}</h2>
-        {signup && <p className="mt-2 max-w-sm text-sm text-muted">{t.login.signupBody}</p>}
+        <h2 className="display text-[52px] leading-none">{t.login.title}</h2>
+        <p className="mt-3 max-w-sm text-sm text-muted">{t.login.body}</p>
 
         {step === 'email' ? (
           <form onSubmit={sendCode} className="mt-8 max-w-sm space-y-4">
@@ -116,7 +115,7 @@ export default function Login({ mode }: { mode: 'login' | 'signup' }) {
               />
             </label>
             <button type="submit" className="btn-primary w-full" disabled={busy || code.length !== 6}>
-              {busy ? '…' : signup ? t.login.signupCta : t.login.verify}
+              {busy ? '…' : t.login.verify}
             </button>
             <div className="flex justify-between text-sm">
               <button type="button" className="inline-flex items-center gap-1 text-muted hover:text-paper" onClick={() => (setStep('email'), setCode(''), setErr(null))}>
@@ -134,9 +133,6 @@ export default function Login({ mode }: { mode: 'login' | 'signup' }) {
           </p>
         )}
 
-        <button type="button" onClick={() => openAuth(signup ? 'login' : 'signup')} className="mt-6 self-start text-sm font-bold text-mustard hover:underline">
-          {signup ? t.login.haveAccount : t.login.noAccount}
-        </button>
         <div className="mt-8 max-w-sm border-t border-dashed border-line pt-4 text-sm">
           {editServer ? (
             <div className="flex gap-2">

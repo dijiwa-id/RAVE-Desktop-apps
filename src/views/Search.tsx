@@ -1,7 +1,11 @@
+import { media } from '@/lib/api';
 import { useT } from '@/lib/i18n';
+import { openExternal } from '@/lib/native';
+import { usePlatform } from '@/lib/platform';
 import { useApi } from '@/lib/query';
-import type { SearchResult } from '@/lib/types';
-import { useNav } from '@/stores/nav';
+import type { Category, SearchResult } from '@/lib/types';
+import { routeFromHref, useNav } from '@/stores/nav';
+import { useSettings } from '@/stores/settings';
 import { trackToPlayable, usePlayer } from '@/stores/player';
 import { Cover, Empty, Loadable, PlayButton } from '@/components/ui';
 import { MediaCard, Shelf, TrackList } from '@/components/media';
@@ -13,26 +17,7 @@ export default function Search({ q }: { q?: string }) {
   const go = useNav((s) => s.go);
   const playQueue = usePlayer((s) => s.playQueue);
 
-  if (!term)
-    return (
-      <div className="px-6 pt-10">
-        <h1 className="display text-[56px]">{t.nav.search}</h1>
-        <p className="mt-2 text-muted">{t.search.start}</p>
-        <div className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
-          {(['indie-pop', 'folk', 'rock', 'r-n-b', 'shoegaze', 'hip-hop', 'jazz', 'electronic'] as const).map((g, i) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => useNav.getState().replace({ name: 'search', q: g })}
-              className="grain relative h-28 overflow-hidden p-4 text-left shadow-[3px_3px_0_#0b0a0c] transition hover:-translate-y-0.5"
-              style={{ background: ['#5b2a6e', '#1f5c52', '#8a2f3f', '#2a1233', '#7a3e91', '#b98a00', '#1a8fb0', '#c0405a'][i] }}
-            >
-              <span className="display text-3xl">{g.replace(/-/g, ' ')}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
+  if (!term) return <Browse />;
 
   const d = r.data;
   const top = d?.artists[0];
@@ -96,5 +81,59 @@ export default function Search({ q }: { q?: string }) {
         )
       )}
     </Loadable>
+  );
+}
+
+/** Jelajahi semua — tile kategori dari server (`GET /v1/catalog/browse`), sama persis dengan web /app/search. */
+function Browse() {
+  const t = useT();
+  const q = useApi<{ data: Category[] }>('/v1/catalog/browse');
+  const podcasts = usePlatform()('modules.podcasts', true);
+  const list = (q.data?.data ?? []).filter((c) => podcasts || !c.href.startsWith('/app/podcasts'));
+  return (
+    <div className="px-6 pt-2 pb-10">
+      <h1 className="display text-[56px]">{t.browse.title}</h1>
+      <p className="mt-1 text-muted">{t.search.start}</p>
+      <Loadable
+        loading={q.loading}
+        error={q.error}
+        onRetry={q.reload}
+        skeleton={
+          <div className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(184px,1fr))] gap-5">
+            {Array.from({ length: 10 }, (_, i) => (
+              <div key={i} className="aspect-[4/3] animate-pulse bg-raised" />
+            ))}
+          </div>
+        }
+      >
+        <div className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(184px,1fr))] gap-5">
+          {list.map((c) => (
+            <CategoryTile key={c.id} c={c} />
+          ))}
+        </div>
+      </Loadable>
+    </div>
+  );
+}
+
+function CategoryTile({ c }: { c: Category }) {
+  const t = useT();
+  const go = useNav((s) => s.go);
+  const server = useSettings((s) => s.server);
+  const route = routeFromHref(c.href);
+  // Rute yang belum ada di desktop (event & tiket) dibuka di web RAVE.
+  const open = () => (route ? go(route) : void openExternal(server + c.href));
+  const img = media(c.image_url);
+  return (
+    <button
+      type="button"
+      onClick={open}
+      title={route ? c.name : t.browse.eventsOnWeb}
+      className="grain relative aspect-[4/3] overflow-hidden p-4 text-left shadow-[3px_3px_0_#0b0a0c] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#0b0a0c] focus-visible:-translate-y-0.5"
+      style={{ background: c.color }}
+    >
+      <span className="display relative z-10 block text-[28px] leading-none break-words text-white">{c.name}</span>
+      {img && <img src={img} alt="" loading="lazy" decoding="async" className="absolute -right-3 -bottom-2 size-[46%] rotate-[25deg] object-cover shadow-[0_4px_12px_rgb(0_0_0/0.4)]" />}
+    </button>
   );
 }

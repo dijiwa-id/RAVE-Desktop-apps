@@ -4,8 +4,26 @@ import { persist } from 'zustand/middleware';
 export type Quality = 'auto' | 'low' | 'normal' | 'high' | 'lossless';
 export type Locale = 'id' | 'en';
 
-/** Server default: VITE_RAVE_API (build) → produksi lokal. Dapat diganti pengguna di Pengaturan. */
-export const DEFAULT_SERVER = (import.meta.env.VITE_RAVE_API as string | undefined)?.replace(/\/$/, '') || 'http://127.0.0.1:8088';
+/**
+ * Server default: VITE_RAVE_API (build rilis wajib mengisinya) → server demo lokal (`./rave demo`, port 8080).
+ * Dapat diganti pengguna di Pengaturan.
+ */
+export const DEFAULT_SERVER = (import.meta.env.VITE_RAVE_API as string | undefined)?.replace(/\/$/, '') || 'http://127.0.0.1:8080';
+
+/** Pilihan cepat server: `VITE_RAVE_API_PRESETS="Demo|http://…,Produksi|https://…"`; default selalu pertama. */
+export const SERVER_PRESETS: { name: string; url: string }[] = (() => {
+  const out = [{ name: 'Default', url: DEFAULT_SERVER }];
+  for (const e of (import.meta.env.VITE_RAVE_API_PRESETS ?? '').split(',')) {
+    const i = e.indexOf('|');
+    const url = i > 0 ? normalizeServer(e.slice(i + 1)) : null;
+    if (!url) continue;
+    const name = e.slice(0, i).trim();
+    const k = out.findIndex((p) => p.url === url);
+    if (k >= 0) out[k] = { name, url };
+    else out.push({ name, url });
+  }
+  return out;
+})();
 
 interface SettingsState {
   server: string;
@@ -31,7 +49,16 @@ export const useSettings = create<SettingsState>()(
       setQuality: (quality) => set({ quality }),
       setMediaKeys: (mediaKeys) => set({ mediaKeys }),
     }),
-    { name: 'rave-desktop-settings' },
+    {
+      name: 'rave-desktop-settings',
+      version: 1,
+      // v0 (≤0.2.0) menyimpan default lama :8088 (produksi lokal, tertutup CORS untuk aplikasi) → pakai default baru.
+      migrate: (state, from) => {
+        const s = state as SettingsState;
+        if (from < 1 && s.server === 'http://127.0.0.1:8088') s.server = DEFAULT_SERVER;
+        return s;
+      },
+    },
   ),
 );
 

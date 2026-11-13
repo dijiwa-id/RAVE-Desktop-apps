@@ -32,7 +32,7 @@ export function RightPanel({ tab, onTab, onClose }: { tab: PanelTab; onTab: (t: 
           </button>
         ))}
         <span className="flex-1" />
-        <button type="button" aria-label="Tutup" onClick={onClose} className="grid size-8 place-items-center text-muted hover:text-paper">
+        <button type="button" aria-label={t.login.close} title={t.login.close} onClick={onClose} className="grid size-8 place-items-center text-muted hover:text-paper">
           <X className="size-4" />
         </button>
       </div>

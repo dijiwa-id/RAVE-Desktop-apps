@@ -52,7 +52,7 @@ export function TopBar({ solid }: { solid: boolean }) {
             className="h-11 w-full border-2 border-transparent bg-raised pr-10 pl-11 text-[15px] text-paper outline-none placeholder:text-subtle focus:border-paper"
           />
           {q && (
-            <button type="button" aria-label="Hapus" onClick={() => setQ('')} className="absolute top-1/2 right-3 -translate-y-1/2 text-muted hover:text-paper">
+            <button type="button" aria-label={t.common.clear} title={t.common.clear} onClick={() => setQ('')} className="absolute top-1/2 right-3 -translate-y-1/2 text-muted hover:text-paper">
               <X className="size-4" />
             </button>
           )}
@@ -62,14 +62,9 @@ export function TopBar({ solid }: { solid: boolean }) {
       <div className="flex-1" />
 
       {!user && (
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={() => useUi.getState().openAuth('login')} className="label px-2 py-2 text-paper hover:text-mustard">
-            {t.guest.login}
-          </button>
-          <button type="button" onClick={() => useUi.getState().openAuth('signup')} className="btn-primary !px-4 !py-2.5">
-            {t.guest.signup}
-          </button>
-        </div>
+        <button type="button" onClick={() => useUi.getState().openAuth()} className="btn-primary !px-4 !py-2.5">
+          {t.guest.cta}
+        </button>
       )}
 
       {user && (

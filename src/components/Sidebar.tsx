@@ -1,4 +1,4 @@
-import { Heart, Home, Library, PanelLeftClose, PanelLeftOpen, Search, Settings } from 'lucide-react';
+import { Heart, Home, Library, PanelLeftClose, PanelLeftOpen, Radio, Search, Settings } from 'lucide-react';
 import logo from '@/assets/rave-logo.webp';
 import icon from '@/assets/rave-icon.svg';
 import { useT } from '@/lib/i18n';
@@ -9,6 +9,7 @@ import { useNav, type Route } from '@/stores/nav';
 import { usePlayer } from '@/stores/player';
 import { Cover, cx } from '@/components/ui';
 import { useUi } from '@/stores/ui';
+import { useAnyLive, useLiveEnabled } from '@/components/live';
 
 /** Navigasi kiri: menu utama + pustaka (Disukai & playlist). Ciut ke ikon di jendela sempit. */
 export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
@@ -18,12 +19,17 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
   const lib = useApi<LibrarySummary>(authed ? '/v1/library/summary' : null);
   const playing = usePlayer((s) => s.playing);
 
-  const items: { r: Route; label: string; Icon: typeof Home }[] = [
+  const liveOn = useLiveEnabled();
+  const anyLive = useAnyLive();
+  const items: { r: Route; label: string; Icon: typeof Home; dot?: boolean }[] = [
     { r: { name: 'home' }, label: t.nav.home, Icon: Home },
     { r: { name: 'search' }, label: t.nav.search, Icon: Search },
+    ...(liveOn ? [{ r: { name: 'live' } as Route, label: t.nav.live, Icon: Radio, dot: anyLive }] : []),
     { r: { name: 'library' }, label: t.nav.library, Icon: Library },
   ];
-  const isActive = (r: Route) => route.name === r.name && (!('id' in r) || ('id' in route && route.id === r.id));
+  // Halaman turunan menyalakan menu induknya (genre/podcast → Cari, tonton live → Live).
+  const section = route.name === 'genre' || route.name === 'podcasts' ? 'search' : route.name === 'live-watch' ? 'live' : route.name === 'liked' ? 'library' : route.name;
+  const isActive = (r: Route) => section === r.name;
 
   return (
     <aside className={cx('panel grain flex min-h-0 shrink-0 flex-col transition-[width] duration-200', collapsed ? 'w-[72px]' : 'w-[264px]')} aria-label="Navigasi">
@@ -31,7 +37,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
         {collapsed ? <img src={icon} alt="RAVE" className={cx('size-9', playing && 'animate-[spin_6s_linear_infinite]')} /> : <img src={logo} alt="RAVE" className="h-8 w-auto" />}
       </div>
       <nav className="flex flex-col gap-0.5 px-2">
-        {items.map(({ r, label, Icon }) => {
+        {items.map(({ r, label, Icon, dot }) => {
           const active = isActive(r);
           return (
             <button
@@ -46,8 +52,12 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
                 active ? 'bg-raised text-paper shadow-[inset_3px_0_0_var(--color-mustard)]' : 'text-muted hover:text-paper',
               )}
             >
-              <Icon className="size-[22px] shrink-0" strokeWidth={active ? 2.5 : 2} />
+              <span className="relative">
+                <Icon className="size-[22px] shrink-0" strokeWidth={active ? 2.5 : 2} />
+                {dot && <span className="absolute -top-0.5 -right-0.5 size-2.5 animate-pulse rounded-full border-2 border-base bg-red-500" aria-hidden />}
+              </span>
               {!collapsed && <span>{label}</span>}
+              {!collapsed && dot && <span className="label ml-auto bg-red-600 px-1.5 py-0.5 !text-[10px] text-white">{t.live.live}</span>}
             </button>
           );
         })}
@@ -60,11 +70,8 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
           <div className="mx-1 border border-line bg-raised p-4">
             <p className="font-bold">{t.guest.libraryHint}</p>
             <p className="mt-1 text-[13px] text-muted">{t.guest.body}</p>
-            <button type="button" onClick={() => useUi.getState().openAuth('signup')} className="btn-primary mt-4 w-full !py-2.5">
-              {t.guest.signup}
-            </button>
-            <button type="button" onClick={() => useUi.getState().openAuth('login')} className="label mt-3 w-full text-center text-muted hover:text-paper">
-              {t.guest.login}
+            <button type="button" onClick={() => useUi.getState().openAuth()} className="btn-ghost mt-4 w-full justify-center !py-2">
+              {t.guest.cta}
             </button>
           </div>
         )}

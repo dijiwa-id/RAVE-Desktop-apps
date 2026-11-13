@@ -59,6 +59,14 @@ npm install
 VITE_RAVE_API=http://127.0.0.1:8080 npm run dev     # buka http://localhost:1420
 ```
 
+**Server demo untuk uji:** di repo `Development` jalankan `./rave demo` (atau `./rave demo --reset` untuk data bersih).
+Server demo memakai DB dev yang terpisah dari produksi Docker, mengizinkan CORS untuk aplikasi, dan menampilkan kode OTP
+langsung di layar masuk. Akun demo: `fan@rave.id` (Gratis), `premium@rave.id` (Premium). Build lokal tanpa
+`VITE_RAVE_API` otomatis menunjuk `http://127.0.0.1:8080`. Preset di Pengaturan: `VITE_RAVE_API_PRESETS="Demo lokal|http://127.0.0.1:8080,Produksi lokal|http://127.0.0.1:8088"`.
+
+```bash
+```
+
 Fitur native (tombol media global, satu instance) tidak aktif di mode ini; semuanya aman diabaikan.
 
 ### Aplikasi desktop

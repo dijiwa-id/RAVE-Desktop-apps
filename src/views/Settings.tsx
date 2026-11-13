@@ -3,10 +3,9 @@ import { api } from '@/lib/api';
 import { openExternal } from '@/lib/native';
 import { APP_VERSION } from '@/lib/version';
 import { useT } from '@/lib/i18n';
-import { logout } from '@/lib/session';
-import { clearCache } from '@/lib/query';
+import { logout, probeServer, switchServer } from '@/lib/session';
 import { useAuth } from '@/stores/auth';
-import { normalizeServer, useSettings, type Quality } from '@/stores/settings';
+import { normalizeServer, SERVER_PRESETS, useSettings, type Quality } from '@/stores/settings';
 import { toast } from '@/stores/toast';
 import { cx } from '@/components/ui';
 import { useUi } from '@/stores/ui';
@@ -22,22 +21,15 @@ export default function Settings() {
   async function testServer(url = server) {
     const u = normalizeServer(url);
     if (!u) return setTest({ ok: false, text: t.settings.serverInvalid });
-    try {
-      const r = await fetch(`${u}/v1/version`, { signal: AbortSignal.timeout(5000) });
-      const v = (await r.json()) as { version?: string };
-      setTest({ ok: r.ok, text: r.ok ? t.settings.testOk(v.version ?? '?') : `HTTP ${r.status}` });
-    } catch {
-      setTest({ ok: false, text: t.common.offline });
-    }
+    setTest({ ok: true, text: '…' });
+    const v = await probeServer(u);
+    setTest(v ? { ok: true, text: t.settings.testOk(v) } : { ok: false, text: t.common.offline });
   }
   async function saveServer() {
     const u = normalizeServer(server);
     if (!u) return setTest({ ok: false, text: t.settings.serverInvalid });
     if (u === s.server) return;
-    // Server lain = akun & data lain → keluar dulu agar token tidak terkirim ke server yang salah.
-    if (user) await logout();
-    s.setServer(u);
-    clearCache();
+    await switchServer(u);
     setServer(u);
     toast.success(t.settings.serverSaved);
   }
@@ -62,17 +54,23 @@ export default function Settings() {
         ) : (
           <div className="flex flex-wrap items-center gap-4">
             <p className="max-w-md text-sm text-muted">{t.guest.body}</p>
-            <button type="button" className="btn-primary" onClick={() => useUi.getState().openAuth('signup')}>
-              {t.guest.signup}
-            </button>
-            <button type="button" className="btn-ghost" onClick={() => useUi.getState().openAuth('login')}>
-              {t.guest.login}
+            <button type="button" className="btn-ghost" onClick={() => useUi.getState().openAuth()}>
+              {t.guest.cta}
             </button>
           </div>
         )}
       </Section>
 
       <Section title={t.settings.server} hint={t.settings.serverHint}>
+        {SERVER_PRESETS.length > 1 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {SERVER_PRESETS.map((p) => (
+              <button key={p.url} type="button" title={p.url} className={cx('label border px-3 py-2', server === p.url ? 'border-paper text-paper' : 'border-line text-muted hover:text-paper')} onClick={() => (setServer(p.url), setTest(null))}>
+                {p.name}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <input className="field max-w-md font-mono" value={server} onChange={(e) => setServer(e.target.value)} spellCheck={false} aria-label={t.settings.server} />
           <button type="button" className="btn-ghost" onClick={() => void testServer()}>
@@ -107,7 +105,7 @@ export default function Settings() {
           ))}
         </select>
         {!user?.premium && (
-          <button type="button" className="label mt-3 text-mustard hover:underline" onClick={() => void openExternal(`${s.server}/premium`)}>
+          <button type="button" className="label mt-3 block text-mustard hover:underline" onClick={() => void openExternal(`${s.server}/premium`)}>
             {t.settings.goPremium} ↗
           </button>
         )}

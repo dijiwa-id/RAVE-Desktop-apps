@@ -10,6 +10,10 @@ export type Route =
   | { name: 'album'; id: string }
   | { name: 'playlist'; id: string }
   | { name: 'show'; id: string }
+  | { name: 'genre'; id: string }
+  | { name: 'podcasts'; kind?: 'PODCAST' | 'FICTION' }
+  | { name: 'live' }
+  | { name: 'live-watch'; id: string }
   | { name: 'settings' };
 
 interface NavState {
@@ -52,7 +56,14 @@ export const useNav = create<NavState>((set, get) => ({
 
 /** Ubah href web (`/app/album/:id`, `/app/artist/:slug`, …) dari API menjadi rute desktop. */
 export function routeFromHref(href: string): Route | null {
-  const m = /^\/app\/(album|artist|playlist|show)\/([^/?#]+)/.exec(href);
-  if (!m) return null;
-  return { name: m[1] as 'album' | 'artist' | 'playlist' | 'show', id: decodeURIComponent(m[2]) };
+  const m = /^\/app\/(album|artist|playlist|show|genre|live)\/([^/?#]+)/.exec(href);
+  if (m) {
+    const id = decodeURIComponent(m[2]);
+    if (m[1] === 'live') return { name: 'live-watch', id };
+    return { name: m[1] as 'album' | 'artist' | 'playlist' | 'show' | 'genre', id };
+  }
+  if (/^\/app\/podcasts\b/.test(href)) return { name: 'podcasts', kind: /kind=FICTION/.test(href) ? 'FICTION' : 'PODCAST' };
+  if (/^\/app\/live\/?$/.test(href)) return { name: 'live' };
+  if (/^\/app\/?$/.test(href)) return { name: 'home' };
+  return null;
 }
